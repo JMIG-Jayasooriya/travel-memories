@@ -1,0 +1,32 @@
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Node
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
+.env
+*.local
+
+# Frontend Build outputs
+frontend/dist/
+
+# Ignored accidental nested frontend
+frontend/frontend/
+
+# Backend Build outputs
+backend/target/
+*.class
+dependency-reduced-pom.xml
