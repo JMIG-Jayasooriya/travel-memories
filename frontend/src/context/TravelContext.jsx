@@ -1,21 +1,117 @@
-import React, { createContext, useContext, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import {
   initialTrips, initialMemories, initialStories, initialExpenses,
 } from '../data/mockData'
+import { authApi, getToken, setToken, clearToken } from '../api/auth'
 
-// In a real deployment this context's setters would call the Spring Boot
-// API (see /backend) via axios instead of mutating local state directly.
 const TravelContext = createContext(null)
 
 let idCounter = 1000
 const nextId = (prefix) => `${prefix}${idCounter++}`
 
+const USER_STORAGE_KEY = 'travel_user'
+
 export function TravelProvider({ children }) {
-  const [user, setUser] = useState(null) // null = logged out
+  // Initialize user from cached storage if available
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem(USER_STORAGE_KEY) || sessionStorage.getItem(USER_STORAGE_KEY)
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch {
+      return null
+    }
+  })
+  const [authLoading, setAuthLoading] = useState(true)
+
   const [trips, setTrips] = useState(initialTrips)
   const [memories, setMemories] = useState(initialMemories)
   const [stories, setStories] = useState(initialStories)
   const [expenses, setExpenses] = useState(initialExpenses)
+
+  // Verify and hydrate session on initial load
+  useEffect(() => {
+    const hydrateSession = async () => {
+      const token = getToken()
+      if (!token) {
+        setAuthLoading(false)
+        return
+      }
+
+      try {
+        const userData = await authApi.getMe()
+        const currentUser = {
+          id: userData.userId,
+          name: userData.name,
+          email: userData.email,
+        }
+        setUser(currentUser)
+        // Keep storage in sync
+        if (localStorage.getItem('token')) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        } else {
+          sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        }
+      } catch (err) {
+        console.warn('Session expired or invalid:', err.message)
+        clearToken()
+        localStorage.removeItem(USER_STORAGE_KEY)
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+        setUser(null)
+      } finally {
+        setAuthLoading(false)
+      }
+    }
+
+    hydrateSession()
+  }, [])
+
+  // Login handler
+  const login = async (email, password, remember = false) => {
+    const data = await authApi.login({ email, password })
+    setToken(data.token, remember)
+    const currentUser = {
+      id: data.userId,
+      name: data.name || email.split('@')[0],
+      email: data.email || email,
+    }
+    setUser(currentUser)
+    if (remember) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+      sessionStorage.removeItem(USER_STORAGE_KEY)
+    } else {
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+      localStorage.removeItem(USER_STORAGE_KEY)
+    }
+    return currentUser
+  }
+
+  // Register handler
+  const register = async (name, email, password, remember = true) => {
+    const data = await authApi.register({ name, email, password })
+    setToken(data.token, remember)
+    const currentUser = {
+      id: data.userId,
+      name: data.name,
+      email: data.email,
+    }
+    setUser(currentUser)
+    if (remember) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+      sessionStorage.removeItem(USER_STORAGE_KEY)
+    } else {
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+      localStorage.removeItem(USER_STORAGE_KEY)
+    }
+    return currentUser
+  }
+
+  // Logout handler
+  const logout = () => {
+    clearToken()
+    localStorage.removeItem(USER_STORAGE_KEY)
+    sessionStorage.removeItem(USER_STORAGE_KEY)
+    setUser(null)
+  }
 
   const addTrip = (trip) => {
     const withId = { ...trip, id: nextId('t'), favourite: !!trip.favourite, rating: 0 }
@@ -83,6 +179,9 @@ export function TravelProvider({ children }) {
 
   const value = {
     user, setUser,
+    authLoading,
+    login, register, logout,
+    isAuthenticated: !!user,
     trips, addTrip,
     memories, addMemory,
     stories, addStory,

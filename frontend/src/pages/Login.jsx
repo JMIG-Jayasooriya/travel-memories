@@ -1,69 +1,38 @@
-
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTravel } from '../context/TravelContext'
 
 export default function Login() {
-  const { setUser } = useTravel()
+  const { login } = useTravel()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [form, setForm] = useState({
     email: '',
     password: '',
-    remember: false
+    remember: false,
   })
 
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const from = location.state?.from?.pathname || '/dashboard'
+
   const submit = async (e) => {
     e.preventDefault()
     setError('')
 
-    if (!form.email || !form.password) {
+    if (!form.email.trim() || !form.password) {
       setError('Email and password are required.')
       return
     }
 
     try {
       setLoading(true)
-
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid email or password.')
-      }
-
-      // Save JWT token
-      if (form.remember) {
-        localStorage.setItem('token', data.token)
-      } else {
-        sessionStorage.setItem('token', data.token)
-      }
-
-      // Save logged-in user
-      setUser({
-        id: data.userId,
-        name: data.name || form.email.split('@')[0],
-        email: data.email || form.email
-      })
-
-      // Go to dashboard
-      navigate('/dashboard')
-
+      await login(form.email.trim(), form.password, form.remember)
+      navigate(from, { replace: true })
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.')
+      setError(err.message || 'Invalid email or password.')
     } finally {
       setLoading(false)
     }
@@ -80,73 +49,71 @@ export default function Login() {
       </p>
 
       <form onSubmit={submit} className="mt-8 space-y-4">
-
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
             {error}
           </p>
         )}
 
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-ink">
             Email
           </label>
 
           <input
             type="email"
+            required
             value={form.email}
             onChange={(e) =>
               setForm({ ...form, email: e.target.value })
             }
-            className="mt-1 w-full border border-ink/15 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-forest"
+            className="mt-1 w-full border border-ink/15 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-forest bg-paper"
             placeholder="Enter your email"
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-ink">
             Password
           </label>
 
           <input
             type="password"
+            required
             value={form.password}
             onChange={(e) =>
               setForm({ ...form, password: e.target.value })
             }
-            className="mt-1 w-full border border-ink/15 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-forest"
+            className="mt-1 w-full border border-ink/15 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-forest bg-paper"
             placeholder="Enter your password"
           />
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-ink/70">
+          <label className="flex items-center gap-2 text-ink/70 cursor-pointer">
             <input
               type="checkbox"
               checked={form.remember}
               onChange={(e) =>
                 setForm({ ...form, remember: e.target.checked })
               }
+              className="accent-forest rounded"
             />
             Remember me
           </label>
 
-          <button
-            type="button"
-            className="text-forest hover:underline"
-          >
+          <span className="text-forest/70 text-xs hover:text-forest cursor-pointer">
             Forgot password?
-          </button>
+          </span>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-forest text-cream rounded-full py-3 font-semibold hover:brightness-110 transition disabled:opacity-50"
+          className="w-full bg-forest text-cream rounded-full py-3 font-semibold hover:brightness-110 active:scale-[0.99] transition disabled:opacity-50 mt-2"
         >
           {loading ? 'Logging in...' : 'Log In'}
         </button>
-
       </form>
 
       <p className="text-center text-sm text-ink/60 mt-6">
@@ -161,4 +128,5 @@ export default function Login() {
     </div>
   )
 }
+
 
