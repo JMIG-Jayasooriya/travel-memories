@@ -1,32 +1,71 @@
 import React from 'react'
-import { Heart, MapPin } from 'lucide-react'
+import { Heart, MapPin, Calendar } from 'lucide-react'
 import { moods } from '../data/mockData'
 import { useTravel } from '../context/TravelContext'
 
-export default function MemoryCard({ memory }) {
+export default function MemoryCard({ memory, onSelect }) {
   const { toggleFavourite } = useTravel()
   const moodEmoji = moods.find((m) => m.key === memory.mood)?.emoji
 
   return (
-    <div className="break-inside-avoid mb-5 bg-paper rounded-2xl overflow-hidden border border-ink/10 shadow-stamp stamp-rotate hover:rotate-0 transition-transform duration-300">
-      <div className="relative">
-        <img src={memory.photo} alt={memory.title} className="w-full object-cover" />
+    <div
+      onClick={() => onSelect && onSelect(memory)}
+      className="break-inside-avoid mb-6 bg-paper rounded-2xl overflow-hidden border border-ink/10 shadow-stamp hover:shadow-lg transition-all duration-300 group cursor-pointer"
+    >
+      <div className="relative overflow-hidden aspect-[4/3] bg-ink/5">
+        <img
+          src={memory.photo}
+          alt={memory.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
         <button
-          onClick={() => toggleFavourite('memory', memory.id)}
-          className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-cream/90 flex items-center justify-center"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            toggleFavourite('memory', memory.id)
+          }}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-cream/90 hover:bg-cream backdrop-blur flex items-center justify-center shadow-sm transition active:scale-90"
           aria-label="Toggle favourite"
         >
-          <Heart size={13} className={memory.favourite ? 'fill-clay text-clay' : 'text-ink/60'} />
+          <Heart
+            size={14}
+            className={memory.favourite ? 'fill-clay text-clay' : 'text-ink/60 hover:text-clay'}
+          />
         </button>
+
+        {memory.mood && (
+          <span className="absolute bottom-3 left-3 bg-paper/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-medium text-ink shadow-sm">
+            {moodEmoji} {memory.mood}
+          </span>
+        )}
       </div>
-      <div className="p-4">
-        <h3 className="font-display font-semibold text-ink leading-snug">{memory.title}</h3>
-        <p className="text-sm text-ink/60 mt-1 italic">"{memory.caption}"</p>
-        <div className="flex items-center justify-between mt-3 text-xs text-ink/50">
-          <span className="flex items-center gap-1"><MapPin size={11} /> {memory.location}</span>
-          <span>{moodEmoji} {memory.mood}</span>
+
+      <div className="p-4 sm:p-5">
+        <h3 className="font-display font-semibold text-lg text-ink leading-snug group-hover:text-forest transition-colors">
+          {memory.title}
+        </h3>
+        
+        {memory.caption && (
+          <p className="text-sm text-ink/70 mt-1.5 line-clamp-2 italic font-serif">
+            "{memory.caption}"
+          </p>
+        )}
+
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-ink/5 text-xs text-ink/50">
+          <span className="flex items-center gap-1 font-medium text-ink/70">
+            <MapPin size={12} className="text-forest" /> {memory.location}
+          </span>
+          {memory.date && (
+            <span className="flex items-center gap-1">
+              <Calendar size={11} /> {new Date(memory.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+          )}
         </div>
       </div>
     </div>
   )
 }
+

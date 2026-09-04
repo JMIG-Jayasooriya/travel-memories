@@ -1,54 +1,230 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useMemo } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Plus, Search, MapPin, Heart, Sparkles, SlidersHorizontal, Compass, RefreshCw } from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 import TravelStats from '../components/TravelStats'
 import MemoryCard from '../components/MemoryCard'
+import MemoryModal from '../components/MemoryModal'
+import { moods } from '../data/mockData'
 
 export default function Home() {
-  const { stats, memories } = useTravel()
-  const featured = memories.slice(0, 3)
+  const { stats, memories, trips } = useTravel()
+  const navigate = useNavigate()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedMood, setSelectedMood] = useState('All')
+  const [selectedTrip, setSelectedTrip] = useState('All')
+  const [onlyFavourites, setOnlyFavourites] = useState(false)
+  const [activeMemory, setActiveMemory] = useState(null)
+
+  // Filter memories based on search and selected tags
+  const filteredMemories = useMemo(() => {
+    return memories.filter((m) => {
+      const matchSearch =
+        !searchQuery.trim() ||
+        m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (m.location && m.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (m.caption && m.caption.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchMood = selectedMood === 'All' || m.mood === selectedMood
+      const matchTrip = selectedTrip === 'All' || m.tripId === selectedTrip
+      const matchFav = !onlyFavourites || m.favourite
+
+      return matchSearch && matchMood && matchTrip && matchFav
+    })
+  }, [memories, searchQuery, selectedMood, selectedTrip, onlyFavourites])
+
+  const hasActiveFilters = searchQuery !== '' || selectedMood !== 'All' || selectedTrip !== 'All' || onlyFavourites
+
+  const resetFilters = () => {
+    setSearchQuery('')
+    setSelectedMood('All')
+    setSelectedTrip('All')
+    setOnlyFavourites(false)
+  }
 
   return (
-    <div>
-      <section className="relative h-[88vh] min-h-[560px] flex items-end overflow-hidden">
+    <div className="min-h-screen pb-20">
+      {/* Hero Header */}
+      <section className="relative h-[65vh] min-h-[480px] max-h-[640px] flex items-end overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1800&q=80"
-          alt="Mountain valley at sunrise"
+          alt="Scenic mountain journey"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/20 to-ink/10" />
-        <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-8 pb-16 md:pb-24 w-full">
-          <p className="font-hand text-3xl text-cream/90 mb-1">Every journey tells a story.</p>
-          <h1 className="font-display text-5xl md:text-7xl font-semibold text-cream leading-[0.95] tracking-tight">
-            TRAVEL<br />MEMORIES
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/40 to-ink/20" />
+
+        <div className="relative z-10 max-w-5xl mx-auto px-5 md:px-8 pb-14 w-full text-center sm:text-left">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cream/20 backdrop-blur-md text-cream text-xs font-semibold tracking-wide uppercase mb-3">
+            <Sparkles size={13} /> Digital Travel Scrapbook
+          </span>
+          <h1 className="font-display text-4xl sm:text-6xl font-bold text-cream leading-[1.05] tracking-tight">
+            Every Journey <br className="hidden sm:inline" />Tells a Story.
           </h1>
-          <p className="text-cream/80 max-w-md mt-5 text-sm md:text-base">
-            Capture your adventures, preserve your memories, and relive every journey.
+          <p className="text-cream/80 max-w-lg mt-3 text-sm sm:text-base leading-relaxed">
+            Record memories, curate your favourite moments, and cherish every adventure in one simple place.
           </p>
-          <div className="flex flex-wrap gap-3 mt-7">
-            <Link to="/create-trip" className="bg-clay text-cream px-6 py-3 rounded-full text-sm font-semibold shadow-stamp hover:brightness-105 transition">
-              Start Your Journey
+
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-6">
+            <Link
+              to="/add-memory"
+              className="inline-flex items-center gap-2 bg-clay text-cream px-6 py-3 rounded-full text-sm font-semibold shadow-stamp hover:brightness-110 active:scale-95 transition"
+            >
+              <Plus size={17} strokeWidth={2.5} /> Log a Memory
             </Link>
-            <Link to="/memories" className="bg-cream/10 backdrop-blur border border-cream/40 text-cream px-6 py-3 rounded-full text-sm font-semibold hover:bg-cream/20 transition">
-              Explore My Memories
+            <Link
+              to="/trips"
+              className="inline-flex items-center gap-2 bg-cream/15 backdrop-blur-md border border-cream/30 text-cream px-6 py-3 rounded-full text-sm font-semibold hover:bg-cream/25 active:scale-95 transition"
+            >
+              <Compass size={17} /> View Trips ({trips.length})
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-5 md:px-8 -mt-12 relative z-20">
+      {/* Quick Stats Bar */}
+      <section className="max-w-5xl mx-auto px-5 md:px-8 -mt-8 relative z-20">
         <TravelStats stats={stats} />
       </section>
 
-      <section className="max-w-7xl mx-auto px-5 md:px-8 mt-20">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-display text-3xl font-semibold text-ink">Recent Memories</h2>
-          <Link to="/memories" className="text-sm font-medium text-forest hover:underline underline-offset-4">View all</Link>
+      {/* Main Journal Feed / Memory Feed */}
+      <section className="max-w-5xl mx-auto px-5 md:px-8 mt-14">
+        {/* Section Title & Search */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-ink/10">
+          <div>
+            <h2 className="font-display text-3xl font-bold text-ink">Travel Journal</h2>
+            <p className="text-ink/60 text-sm mt-1">
+              Showing {filteredMemories.length} of {memories.length} memories
+            </p>
+          </div>
+
+          {/* Search Box */}
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/40" size={16} />
+            <input
+              type="text"
+              placeholder="Search memories, places..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-paper border border-ink/15 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-forest text-ink placeholder:text-ink/40"
+            />
+          </div>
         </div>
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
-          {featured.map((m) => <MemoryCard key={m.id} memory={m} />)}
+
+        {/* Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 mt-6">
+          <button
+            onClick={() => setSelectedMood('All')}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition ${
+              selectedMood === 'All' && !onlyFavourites
+                ? 'bg-forest text-cream'
+                : 'bg-paper border border-ink/15 text-ink/70 hover:bg-forest/5'
+            }`}
+          >
+            All Moments
+          </button>
+
+          <button
+            onClick={() => setOnlyFavourites((prev) => !prev)}
+            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold border transition ${
+              onlyFavourites
+                ? 'bg-clay text-cream border-clay'
+                : 'bg-paper border-ink/15 text-ink/70 hover:border-clay/50'
+            }`}
+          >
+            <Heart size={12} className={onlyFavourites ? 'fill-cream' : 'text-clay'} />
+            Favourites Only
+          </button>
+
+          {moods.map((m) => (
+            <button
+              key={m.key}
+              onClick={() => {
+                setSelectedMood(m.key)
+                setOnlyFavourites(false)
+              }}
+              className={`inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-medium border transition ${
+                selectedMood === m.key && !onlyFavourites
+                  ? 'bg-forest text-cream border-forest font-semibold'
+                  : 'bg-paper border-ink/15 text-ink/70 hover:bg-forest/5'
+              }`}
+            >
+              <span>{m.emoji}</span> {m.key}
+            </button>
+          ))}
+
+          {trips.length > 0 && (
+            <select
+              value={selectedTrip}
+              onChange={(e) => setSelectedTrip(e.target.value)}
+              className="ml-auto text-xs font-medium bg-paper border border-ink/15 rounded-full px-3 py-1.5 text-ink/80 focus:outline-none focus:ring-2 focus:ring-forest"
+            >
+              <option value="All">All Trips</option>
+              {trips.map((t) => (
+                <option key={t.id} value={t.id}>
+                  Trip: {t.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1 text-xs text-clay font-medium hover:underline ml-1"
+            >
+              <RefreshCw size={11} /> Reset
+            </button>
+          )}
         </div>
+
+        {/* Scrapbook Grid */}
+        {filteredMemories.length > 0 ? (
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 mt-8">
+            {filteredMemories.map((m) => (
+              <MemoryCard
+                key={m.id}
+                memory={m}
+                onSelect={(selected) => setActiveMemory(selected)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-paper border border-ink/10 rounded-3xl p-12 text-center mt-8">
+            <div className="w-14 h-14 rounded-full bg-forest/10 text-forest flex items-center justify-center mx-auto mb-3">
+              <Search size={24} />
+            </div>
+            <h3 className="font-display text-xl font-semibold text-ink">No memories found</h3>
+            <p className="text-ink/60 text-sm mt-1 max-w-sm mx-auto">
+              {hasActiveFilters
+                ? 'Try adjusting or clearing your filters to see more memories.'
+                : 'Your journal is waiting for your first travel memory.'}
+            </p>
+            {hasActiveFilters ? (
+              <button
+                onClick={resetFilters}
+                className="mt-5 text-sm font-semibold bg-forest text-cream px-5 py-2 rounded-full hover:brightness-110"
+              >
+                Clear all filters
+              </button>
+            ) : (
+              <Link
+                to="/add-memory"
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold bg-clay text-cream px-5 py-2.5 rounded-full shadow-sm hover:brightness-110"
+              >
+                <Plus size={16} /> Add Your First Memory
+              </Link>
+            )}
+          </div>
+        )}
       </section>
+
+      {/* Memory Detail Modal */}
+      <MemoryModal
+        memory={activeMemory}
+        onClose={() => setActiveMemory(null)}
+      />
     </div>
   )
 }
+
