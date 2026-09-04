@@ -1,100 +1,161 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Heart, MapPin, Plus } from 'lucide-react'
+import { Heart, MapPin, Plus, ArrowLeft, Calendar, Compass, Tag } from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 import Rating from '../components/Rating'
 import MemoryCard from '../components/MemoryCard'
-import { expenseCategories } from '../data/mockData'
+import MemoryModal from '../components/MemoryModal'
 
 export default function TripDetail() {
   const { id } = useParams()
-  const { trips, memories, toggleFavourite, expenses, addExpense } = useTravel()
+  const { trips, memories, toggleFavourite } = useTravel()
+  const [activeMemory, setActiveMemory] = useState(null)
+
   const trip = trips.find((t) => t.id === id)
   const tripMemories = memories.filter((m) => m.tripId === id)
-  const tripExpenses = expenses[id] || []
-  const total = tripExpenses.reduce((s, e) => s + Number(e.amount), 0)
-
-  const [form, setForm] = useState({ category: expenseCategories[0], amount: '' })
-  const [error, setError] = useState('')
 
   if (!trip) {
-    return <div className="max-w-2xl mx-auto px-5 py-20 text-center text-ink/50">Trip not found. <Link to="/trips" className="text-forest">Back to trips</Link></div>
-  }
-
-  const submitExpense = (e) => {
-    e.preventDefault()
-    if (!form.amount || Number(form.amount) <= 0) { setError('Enter a positive amount.'); return }
-    addExpense(id, { category: form.category, amount: Number(form.amount) })
-    setForm({ category: expenseCategories[0], amount: '' })
-    setError('')
+    return (
+      <div className="max-w-2xl mx-auto px-5 py-24 text-center">
+        <h2 className="font-display text-2xl font-bold text-ink">Trip Not Found</h2>
+        <p className="text-ink/60 text-sm mt-2 mb-6">
+          This trip might have been removed or doesn't exist.
+        </p>
+        <Link
+          to="/trips"
+          className="inline-flex items-center gap-2 bg-forest text-cream px-5 py-2.5 rounded-full text-sm font-semibold hover:brightness-110"
+        >
+          <ArrowLeft size={16} /> Back to all trips
+        </Link>
+      </div>
+    )
   }
 
   return (
-    <div>
-      <div className="relative h-[50vh] min-h-[340px]">
-        <img src={trip.cover} alt={trip.name} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-5 md:px-8 pb-8 flex items-end justify-between">
+    <div className="min-h-screen pb-20">
+      {/* Trip Cover Banner */}
+      <div className="relative h-[48vh] min-h-[340px] max-h-[500px]">
+        <img
+          src={trip.cover}
+          alt={trip.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/40 to-transparent" />
+
+        <div className="absolute top-6 left-0 right-0 max-w-5xl mx-auto px-5 md:px-8">
+          <Link
+            to="/trips"
+            className="inline-flex items-center gap-1.5 bg-paper/90 hover:bg-paper text-ink text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-sm backdrop-blur transition"
+          >
+            <ArrowLeft size={14} /> Back to Trips
+          </Link>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 max-w-5xl mx-auto px-5 md:px-8 pb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-4xl font-semibold text-cream">{trip.name}</h1>
-            <p className="flex items-center gap-1 text-cream/80 text-sm mt-1"><MapPin size={13} /> {trip.destination}</p>
+            {trip.type && (
+              <span className="inline-block px-3 py-1 rounded-full bg-cream/20 backdrop-blur text-cream text-xs font-semibold mb-2">
+                {trip.type}
+              </span>
+            )}
+            <h1 className="font-display text-3xl sm:text-5xl font-bold text-cream">
+              {trip.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 text-cream/80 text-sm mt-2">
+              <span className="flex items-center gap-1 font-medium">
+                <MapPin size={14} /> {trip.destination}
+              </span>
+              {trip.startDate && (
+                <span className="flex items-center gap-1">
+                  <Calendar size={14} />{' '}
+                  {new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                </span>
+              )}
+            </div>
           </div>
-          <button onClick={() => toggleFavourite('trip', trip.id)} className="w-10 h-10 rounded-full bg-cream/90 flex items-center justify-center">
-            <Heart size={18} className={trip.favourite ? 'fill-clay text-clay' : 'text-ink/60'} />
+
+          <button
+            onClick={() => toggleFavourite('trip', trip.id)}
+            className="w-11 h-11 rounded-full bg-cream/90 hover:bg-cream shadow-md flex items-center justify-center transition active:scale-90 self-start sm:self-auto"
+            aria-label="Toggle favourite trip"
+          >
+            <Heart
+              size={20}
+              className={trip.favourite ? 'fill-clay text-clay' : 'text-ink/60'}
+            />
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-5 md:px-8 py-10 grid md:grid-cols-3 gap-10">
-        <div className="md:col-span-2 space-y-10">
-          <div>
-            <Rating value={trip.rating} />
-            <p className="text-ink/70 mt-3 leading-relaxed">{trip.description}</p>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-xl font-semibold">Memories from this trip</h2>
-              <Link to="/add-memory" className="flex items-center gap-1 text-sm text-forest hover:underline"><Plus size={14} /> Add memory</Link>
-            </div>
-            {tripMemories.length ? (
-              <div className="columns-1 sm:columns-2 gap-5">
-                {tripMemories.map((m) => <MemoryCard key={m.id} memory={m} />)}
+      {/* Trip Story & Memories */}
+      <div className="max-w-5xl mx-auto px-5 md:px-8 py-10 space-y-10">
+        {/* About this Trip */}
+        {trip.description && (
+          <div className="bg-paper border border-ink/10 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <h2 className="font-display text-xl font-bold text-ink mb-2">About this Journey</h2>
+            <p className="text-ink/75 text-base sm:text-lg leading-relaxed font-serif italic">
+              "{trip.description}"
+            </p>
+            {trip.rating > 0 && (
+              <div className="mt-4 pt-4 border-t border-ink/5 flex items-center gap-2">
+                <span className="text-xs text-ink/50 font-medium">Trip Rating:</span>
+                <Rating value={trip.rating} size={18} />
               </div>
-            ) : <p className="text-ink/50 text-sm">No memories added for this trip yet.</p>}
+            )}
           </div>
-        </div>
+        )}
 
-        <div className="space-y-4">
-          <div className="bg-paper border border-ink/10 rounded-3xl p-6">
-            <h3 className="font-display text-lg font-semibold mb-3">Expenses</h3>
-            <div className="space-y-2 text-sm">
-              {tripExpenses.map((e) => (
-                <div key={e.id} className="flex justify-between text-ink/70">
-                  <span>{e.category}</span>
-                  <span>LKR {Number(e.amount).toLocaleString()}</span>
-                </div>
+        {/* Memories from this trip */}
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-ink">Trip Memories</h2>
+              <p className="text-ink/50 text-sm mt-0.5">
+                {tripMemories.length} moment{tripMemories.length === 1 ? '' : 's'} recorded
+              </p>
+            </div>
+            <Link
+              to="/add-memory"
+              className="inline-flex items-center gap-1.5 bg-clay text-cream px-4 py-2 rounded-full text-xs sm:text-sm font-semibold shadow-sm hover:brightness-110 active:scale-95 transition"
+            >
+              <Plus size={15} strokeWidth={2.5} /> Add Memory to Trip
+            </Link>
+          </div>
+
+          {tripMemories.length ? (
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
+              {tripMemories.map((m) => (
+                <MemoryCard
+                  key={m.id}
+                  memory={m}
+                  onSelect={(selected) => setActiveMemory(selected)}
+                />
               ))}
-              {tripExpenses.length === 0 && <p className="text-ink/40">No expenses logged.</p>}
             </div>
-            <div className="flex justify-between font-semibold border-t border-ink/10 mt-3 pt-3">
-              <span>Total</span><span className="text-clay">LKR {total.toLocaleString()}</span>
+          ) : (
+            <div className="bg-paper border border-ink/10 rounded-3xl p-10 text-center">
+              <Compass className="mx-auto text-forest/40 mb-3" size={32} />
+              <h3 className="font-display text-lg font-semibold text-ink">No memories added yet</h3>
+              <p className="text-ink/50 text-xs sm:text-sm mt-1">
+                Capture the best moments, photos, and highlights from {trip.name}.
+              </p>
+              <Link
+                to="/add-memory"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold bg-forest text-cream px-4 py-2 rounded-full hover:brightness-110"
+              >
+                <Plus size={14} /> Add First Memory
+              </Link>
             </div>
-
-            <form onSubmit={submitExpense} className="mt-5 space-y-2">
-              {error && <p className="text-xs text-red-600">{error}</p>}
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full border border-ink/15 rounded-lg px-2.5 py-2 text-sm bg-cream">
-                {expenseCategories.map((c) => <option key={c}>{c}</option>)}
-              </select>
-              <input type="number" min="0" placeholder="Amount (LKR)" value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                className="w-full border border-ink/15 rounded-lg px-2.5 py-2 text-sm bg-cream" />
-              <button type="submit" className="w-full bg-forest text-cream rounded-lg py-2 text-sm font-semibold">Add Expense</button>
-            </form>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Memory Detail Modal */}
+      <MemoryModal
+        memory={activeMemory}
+        onClose={() => setActiveMemory(null)}
+      />
     </div>
   )
 }
+

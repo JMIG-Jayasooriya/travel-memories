@@ -1,77 +1,48 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
 import Trips from './pages/Trips'
 import CreateTrip from './pages/CreateTrip'
 import TripDetail from './pages/TripDetail'
-import Memories from './pages/Memories'
 import AddMemory from './pages/AddMemory'
-import Stories from './pages/Stories'
-import StoryDetail from './pages/StoryDetail'
-import Favourites from './pages/Favourites'
 import Profile from './pages/Profile'
-import MyJourney from './pages/MyJourney'
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-cream text-ink antialiased">
       <Navbar />
       <main className="flex-1">
         <Routes>
+          {/* Core Simple Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/journey" element={<MyJourney />} />
           <Route path="/trips" element={<Trips />} />
           <Route path="/trips/:id" element={<TripDetail />} />
-          <Route path="/memories" element={<Memories />} />
-          <Route path="/stories" element={<Stories />} />
-          <Route path="/stories/:id" element={<StoryDetail />} />
-          <Route path="/favourites" element={<Favourites />} />
+          <Route path="/add-memory" element={<AddMemory />} />
+          <Route path="/create-trip" element={<CreateTrip />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/create-trip"
-            element={
-              <ProtectedRoute>
-                <CreateTrip />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/add-memory"
-            element={
-              <ProtectedRoute>
-                <AddMemory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+          {/* Legacy route redirects to keep app simple and unified */}
+          <Route path="/memories" element={<Navigate to="/" replace />} />
+          <Route path="/stories" element={<Navigate to="/" replace />} />
+          <Route path="/stories/:id" element={<Navigate to="/" replace />} />
+          <Route path="/favourites" element={<Navigate to="/" replace />} />
+          <Route path="/journey" element={<Navigate to="/trips" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <Footer />
     </div>
   )
 }
+
 
