@@ -18,13 +18,57 @@ export default function App() {
       <Navbar />
       <main className="flex-1">
         <Routes>
-          {/* Core Simple Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/trips" element={<Trips />} />
-          <Route path="/trips/:id" element={<TripDetail />} />
-          <Route path="/add-memory" element={<AddMemory />} />
-          <Route path="/create-trip" element={<CreateTrip />} />
-          <Route path="/profile" element={<Profile />} />
+          {/* Core Simple Routes - Protected Gate */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trips"
+            element={
+              <ProtectedRoute>
+                <Trips />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trips/:id"
+            element={
+              <ProtectedRoute>
+                <TripDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-memory"
+            element={
+              <ProtectedRoute>
+                <AddMemory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-trip"
+            element={
+              <ProtectedRoute>
+                <CreateTrip />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 

@@ -36,68 +36,75 @@ export default function Navbar() {
           </div>
         </NavLink>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-2">
-          {links.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-forest text-cream shadow-sm font-semibold'
-                    : 'text-ink/75 hover:text-forest hover:bg-forest/5'
-                }`
-              }
-            >
-              <Icon size={16} strokeWidth={2} />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+        {/* Desktop Nav - Only when logged in */}
+        {user ? (
+          <nav className="hidden md:flex items-center gap-2">
+            {links.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-forest text-cream shadow-sm font-semibold'
+                      : 'text-ink/75 hover:text-forest hover:bg-forest/5'
+                  }`
+                }
+              >
+                <Icon size={16} strokeWidth={2} />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        ) : (
+          <div className="hidden md:flex items-center gap-2 text-xs font-medium text-ink/50 bg-forest/5 px-3 py-1 rounded-full">
+            <span>🔒 Login required to view personal journals</span>
+          </div>
+        )}
 
         {/* Header Right Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <button
-            onClick={() => navigate('/add-memory')}
-            className="flex items-center gap-1.5 bg-clay text-cream px-4 py-2 rounded-full text-sm font-semibold shadow-stamp hover:brightness-105 active:scale-95 transition"
-          >
-            <Plus size={16} strokeWidth={2.5} /> Add Memory
-          </button>
-
           {user ? (
-            <div className="flex items-center gap-2 pl-2 border-l border-ink/10">
-              <NavLink
-                to="/profile"
-                className="flex items-center gap-2 text-xs font-medium text-ink hover:text-forest bg-forest/5 hover:bg-forest/10 px-3 py-1.5 rounded-full transition"
-                title="View Profile"
-              >
-                <span className="w-6 h-6 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
-                  {(user.name || user.email || 'U')[0].toUpperCase()}
-                </span>
-                <span className="max-w-[100px] truncate">{user.name || user.email.split('@')[0]}</span>
-              </NavLink>
+            <>
               <button
-                onClick={handleLogout}
-                title="Log out"
-                className="p-2 text-ink/40 hover:text-red-600 rounded-full hover:bg-red-50 transition"
+                onClick={() => navigate('/add-memory')}
+                className="flex items-center gap-1.5 bg-clay text-cream px-4 py-2 rounded-full text-sm font-semibold shadow-stamp hover:brightness-105 active:scale-95 transition"
               >
-                <LogOut size={16} />
+                <Plus size={16} strokeWidth={2.5} /> Add Memory
               </button>
-            </div>
+              <div className="flex items-center gap-2 pl-2 border-l border-ink/10">
+                <NavLink
+                  to="/profile"
+                  className="flex items-center gap-2 text-xs font-medium text-ink hover:text-forest bg-forest/5 hover:bg-forest/10 px-3 py-1.5 rounded-full transition"
+                  title="View Profile"
+                >
+                  <span className="w-6 h-6 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
+                    {(user.name || user.email || 'U')[0].toUpperCase()}
+                  </span>
+                  <span className="max-w-[120px] truncate">{user.name || user.email.split('@')[0]}</span>
+                </NavLink>
+                <button
+                  onClick={handleLogout}
+                  title="Log out"
+                  className="p-2 text-ink/40 hover:text-red-600 rounded-full hover:bg-red-50 transition"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            </>
           ) : (
-            <div className="flex items-center gap-2 pl-2 border-l border-ink/10">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate('/login')}
-                className="text-sm font-medium text-forest hover:underline underline-offset-4 px-2 py-1"
+                className="text-sm font-semibold text-forest hover:underline underline-offset-4 px-3 py-1.5"
               >
-                Log in
+                Log In
               </button>
               <button
                 onClick={() => navigate('/register')}
-                className="text-sm font-medium bg-forest/10 text-forest hover:bg-forest hover:text-cream px-3 py-1.5 rounded-full transition"
+                className="text-sm font-semibold bg-forest text-cream hover:brightness-110 px-4 py-2 rounded-full transition shadow-sm"
               >
-                Register
+                Create Account
               </button>
             </div>
           )}
@@ -116,56 +123,58 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       {open && (
         <div className="md:hidden border-t border-ink/10 bg-paper px-5 py-4 flex flex-col gap-2 shadow-lg">
-          {links.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium ${
-                  isActive ? 'bg-forest text-cream' : 'text-ink/80 hover:bg-forest/5'
-                }`
-              }
-            >
-              <Icon size={18} /> {label}
-            </NavLink>
-          ))}
-          <button
-            onClick={() => { setOpen(false); navigate('/add-memory') }}
-            className="flex items-center justify-center gap-1.5 bg-clay text-cream px-4 py-2.5 rounded-full text-sm font-semibold mt-2 shadow-sm"
-          >
-            <Plus size={16} strokeWidth={2.5} /> Add Memory
-          </button>
           {user ? (
-            <div className="flex items-center justify-between pt-3 mt-1 border-t border-ink/10">
-              <NavLink
-                to="/profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 text-sm font-medium text-ink"
-              >
-                <span className="w-7 h-7 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
-                  {(user.name || user.email || 'U')[0].toUpperCase()}
-                </span>
-                <span>{user.name || user.email}</span>
-              </NavLink>
+            <>
+              {links.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium ${
+                      isActive ? 'bg-forest text-cream' : 'text-ink/80 hover:bg-forest/5'
+                    }`
+                  }
+                >
+                  <Icon size={18} /> {label}
+                </NavLink>
+              ))}
               <button
-                onClick={() => { setOpen(false); handleLogout() }}
-                className="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full"
+                onClick={() => { setOpen(false); navigate('/add-memory') }}
+                className="flex items-center justify-center gap-1.5 bg-clay text-cream px-4 py-2.5 rounded-full text-sm font-semibold mt-2 shadow-sm"
               >
-                Log out
+                <Plus size={16} strokeWidth={2.5} /> Add Memory
               </button>
-            </div>
+              <div className="flex items-center justify-between pt-3 mt-1 border-t border-ink/10">
+                <NavLink
+                  to="/profile"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 text-sm font-medium text-ink"
+                >
+                  <span className="w-7 h-7 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
+                    {(user.name || user.email || 'U')[0].toUpperCase()}
+                  </span>
+                  <span>{user.name || user.email}</span>
+                </NavLink>
+                <button
+                  onClick={() => { setOpen(false); handleLogout() }}
+                  className="text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full"
+                >
+                  Log out
+                </button>
+              </div>
+            </>
           ) : (
-            <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-ink/10">
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <button
                 onClick={() => { setOpen(false); navigate('/login') }}
-                className="text-center py-2 text-sm font-medium border border-ink/20 rounded-full text-forest"
+                className="text-center py-2.5 text-sm font-semibold border border-ink/20 rounded-full text-forest bg-paper hover:bg-cream"
               >
-                Log in
+                Log In
               </button>
               <button
                 onClick={() => { setOpen(false); navigate('/register') }}
-                className="text-center py-2 text-sm font-medium bg-forest text-cream rounded-full"
+                className="text-center py-2.5 text-sm font-semibold bg-forest text-cream rounded-full hover:brightness-110"
               >
                 Register
               </button>
