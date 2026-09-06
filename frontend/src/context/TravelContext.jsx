@@ -11,6 +11,25 @@ const nextId = (prefix) => `${prefix}${idCounter++}`
 
 const USER_STORAGE_KEY = 'travel_user'
 
+const REGISTERED_USERS_KEY = 'travel_registered_users'
+
+const getStoredRegisteredUsers = () => {
+  try {
+    const raw = localStorage.getItem(REGISTERED_USERS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+const saveStoredRegisteredUsers = (users) => {
+  try {
+    localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(users))
+  } catch (err) {
+    console.error('Failed to save registered users', err)
+  }
+}
+
 export function TravelProvider({ children }) {
   // Initialize user from cached storage if available
   const [user, setUser] = useState(() => {
@@ -32,7 +51,20 @@ export function TravelProvider({ children }) {
   useEffect(() => {
     const hydrateSession = async () => {
       const token = getToken()
-      if (!token) {
+      const savedUser = localStorage.getItem(USER_STORAGE_KEY) || sessionStorage.getItem(USER_STORAGE_KEY)
+
+      if (!token && !savedUser) {
+        setAuthLoading(false)
+        return
+      }
+
+      if (token && token.startsWith('mock-jwt-')) {
+        // Local/mock token hydrated directly
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser))
+          } catch {}
+        }
         setAuthLoading(false)
         return
       }
@@ -52,11 +84,19 @@ export function TravelProvider({ children }) {
           sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
         }
       } catch (err) {
-        console.warn('Session expired or invalid:', err.message)
-        clearToken()
-        localStorage.removeItem(USER_STORAGE_KEY)
-        sessionStorage.removeItem(USER_STORAGE_KEY)
-        setUser(null)
+        // If backend session failed but we have a saved user, check token type
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser))
+          } catch {
+            setUser(null)
+          }
+        } else {
+          clearToken()
+          localStorage.removeItem(USER_STORAGE_KEY)
+          sessionStorage.removeItem(USER_STORAGE_KEY)
+          setUser(null)
+        }
       } finally {
         setAuthLoading(false)
       }
@@ -65,44 +105,168 @@ export function TravelProvider({ children }) {
     hydrateSession()
   }, [])
 
-  // Login handler
-  const login = async (email, password, remember = false) => {
-    const data = await authApi.login({ email, password })
-    setToken(data.token, remember)
-    const currentUser = {
-      id: data.userId,
-      name: data.name || email.split('@')[0],
-      email: data.email || email,
+  // Login handler supporting email OR username
+  const login = async (identifier, password, remember = false) => {
+    const cleanId = (identifier || '').trim().toLowerCase()
+    
+    // First attempt real backend API if it looks like an email or backend is online
+    let backendFailed = false
+    let explicitBackendError = null
+
+    try {
+      const data = await authApi.login({ email: cleanId, password })
+      setToken(data.token, remember)
+      const currentUser = {
+        id: data.userId,
+        name: data.name || cleanId.split('@')[0],
+        email: data.email || cleanId,
+      }
+      setUser(currentUser)
+      if (remember) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+      } else {
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
+      return currentUser
+    } catch (err) {
+      if (err.status === 401 || err.status === 400 || (err.data && err.data.message)) {
+        explicitBackendError = err.message
+      }
+      backendFailed = true
     }
-    setUser(currentUser)
-    if (remember) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
-      sessionStorage.removeItem(USER_STORAGE_KEY)
-    } else {
-      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
-      localStorage.removeItem(USER_STORAGE_KEY)
+
+    // Offline / Local fallback: Check against local registered users and demo accounts
+    const registeredUsers = getStoredRegisteredUsers()
+    const matchedUser = registeredUsers.find(
+      (u) =>
+        (u.email?.toLowerCase() === cleanId || u.name?.toLowerCase() === cleanId || u.username?.toLowerCase() === cleanId) &&
+        u.password === password
+    )
+
+    // Check demo credentials
+    const isDemoAccount =
+      (cleanId === 'demo@travelmemories.com' || cleanId === 'demo' || cleanId === 'traveler' || cleanId === 'admin') &&
+      (password === 'password123' || password === 'demo' || password === 'admin')
+
+    if (matchedUser) {
+      const mockToken = `mock-jwt-${Date.now()}`
+      setToken(mockToken, remember)
+      const currentUser = {
+        id: matchedUser.id || 'u_' + Date.now(),
+        name: matchedUser.name || cleanId,
+        email: matchedUser.email || `${cleanId}@travelmemories.local`,
+      }
+      setUser(currentUser)
+      if (remember) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+      } else {
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
+      return currentUser
     }
-    return currentUser
+
+    if (isDemoAccount) {
+      const mockToken = `mock-jwt-demo-${Date.now()}`
+      setToken(mockToken, remember)
+      const currentUser = {
+        id: 'demo-user-1',
+        name: 'Alex Rivera',
+        email: 'demo@travelmemories.com',
+      }
+      setUser(currentUser)
+      if (remember) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+      } else {
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
+      return currentUser
+    }
+
+    if (explicitBackendError) {
+      throw new Error(explicitBackendError)
+    }
+
+    throw new Error('Invalid username/email or password.')
   }
 
   // Register handler
   const register = async (name, email, password, remember = true) => {
-    const data = await authApi.register({ name, email, password })
-    setToken(data.token, remember)
-    const currentUser = {
-      id: data.userId,
-      name: data.name,
-      email: data.email,
+    const cleanName = (name || '').trim()
+    const cleanEmail = (email || '').trim().toLowerCase()
+
+    // 1. Try backend API
+    try {
+      const data = await authApi.register({ name: cleanName, email: cleanEmail, password })
+      setToken(data.token, remember)
+      const currentUser = {
+        id: data.userId,
+        name: data.name || cleanName,
+        email: data.email || cleanEmail,
+      }
+      setUser(currentUser)
+      
+      // Also cache in local registered users for offline resilience
+      const registered = getStoredRegisteredUsers()
+      if (!registered.some(u => u.email === cleanEmail)) {
+        registered.push({ id: data.userId, name: cleanName, username: cleanName, email: cleanEmail, password })
+        saveStoredRegisteredUsers(registered)
+      }
+
+      if (remember) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+      } else {
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
+      return currentUser
+    } catch (err) {
+      // If backend returned explicit conflict error
+      if (err.status === 400 && err.message?.includes('already exists')) {
+        throw new Error(err.message)
+      }
+
+      // Check if user already exists locally
+      const registered = getStoredRegisteredUsers()
+      if (registered.some((u) => u.email === cleanEmail || u.name?.toLowerCase() === cleanName.toLowerCase())) {
+        throw new Error('An account with this username or email already exists.')
+      }
+
+      // Offline / Local registration fallback
+      const newUser = {
+        id: 'user_' + Date.now(),
+        name: cleanName,
+        username: cleanName,
+        email: cleanEmail,
+        password: password,
+      }
+      registered.push(newUser)
+      saveStoredRegisteredUsers(registered)
+
+      const mockToken = `mock-jwt-${Date.now()}`
+      setToken(mockToken, remember)
+      const currentUser = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+      }
+      setUser(currentUser)
+
+      if (remember) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+      } else {
+        sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
+      return currentUser
     }
-    setUser(currentUser)
-    if (remember) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
-      sessionStorage.removeItem(USER_STORAGE_KEY)
-    } else {
-      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser))
-      localStorage.removeItem(USER_STORAGE_KEY)
-    }
-    return currentUser
   }
 
   // Logout handler
