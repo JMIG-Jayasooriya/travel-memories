@@ -7,9 +7,9 @@ import MemoryModal from '../components/MemoryModal'
 import { moods } from '../data/mockData'
 
 export default function Memories() {
-  const { memories, trips } = useTravel()
+  const { memories } = useTravel()
   const [searchQuery, setSearchQuery] = useState('')
-  const [tripFilter, setTripFilter] = useState('All')
+  const [companionFilter, setCompanionFilter] = useState('All')
   const [moodFilter, setMoodFilter] = useState('All')
   const [favOnly, setFavOnly] = useState(false)
   const [activeMemory, setActiveMemory] = useState(null)
@@ -20,21 +20,22 @@ export default function Memories() {
         !searchQuery.trim() ||
         m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (m.location && m.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (m.caption && m.caption.toLowerCase().includes(searchQuery.toLowerCase()))
+        (m.caption && m.caption.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (m.companionType && m.companionType.toLowerCase().includes(searchQuery.toLowerCase()))
 
-      const matchTrip = tripFilter === 'All' || m.tripId === tripFilter
+      const matchCompanion = companionFilter === 'All' || m.companionType === companionFilter
       const matchMood = moodFilter === 'All' || m.mood === moodFilter
       const matchFav = !favOnly || m.favourite
 
-      return matchSearch && matchTrip && matchMood && matchFav
+      return matchSearch && matchCompanion && matchMood && matchFav
     })
-  }, [memories, searchQuery, tripFilter, moodFilter, favOnly])
+  }, [memories, searchQuery, companionFilter, moodFilter, favOnly])
 
-  const hasActiveFilters = searchQuery !== '' || tripFilter !== 'All' || moodFilter !== 'All' || favOnly
+  const hasActiveFilters = searchQuery !== '' || companionFilter !== 'All' || moodFilter !== 'All' || favOnly
 
   const resetFilters = () => {
     setSearchQuery('')
-    setTripFilter('All')
+    setCompanionFilter('All')
     setMoodFilter('All')
     setFavOnly(false)
   }
@@ -75,21 +76,19 @@ export default function Memories() {
           />
         </div>
 
-        {/* Trip Dropdown Selector */}
-        {trips.length > 0 && (
-          <select
-            value={tripFilter}
-            onChange={(e) => setTripFilter(e.target.value)}
-            className="text-xs font-medium bg-paper border border-ink/15 rounded-full px-4 py-2 text-ink/80 focus:outline-none focus:ring-2 focus:ring-forest"
-          >
-            <option value="All">All Trips ({trips.length})</option>
-            {trips.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        )}
+        {/* Trip Type / Companion Dropdown Selector */}
+        <select
+          value={companionFilter}
+          onChange={(e) => setCompanionFilter(e.target.value)}
+          className="text-xs font-semibold bg-paper border border-ink/15 rounded-full px-4 py-2 text-ink/80 focus:outline-none focus:ring-2 focus:ring-forest cursor-pointer"
+        >
+          <option value="All">All Trip Types</option>
+          <option value="Solo">🧍 Solo</option>
+          <option value="Friends">👥 Friends</option>
+          <option value="Family">👨‍👩‍👧 Family</option>
+          <option value="Official">💼 Official</option>
+          <option value="Other">✨ Other</option>
+        </select>
       </div>
 
       {/* Mood Filter Pills */}

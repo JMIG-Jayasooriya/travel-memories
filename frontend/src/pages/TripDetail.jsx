@@ -1,6 +1,16 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Heart, MapPin, Plus, ArrowLeft, Calendar, Compass, Tag } from 'lucide-react'
+import {
+  Heart,
+  MapPin,
+  Plus,
+  ArrowLeft,
+  Calendar,
+  Compass,
+  Tag,
+  Images,
+  Camera,
+} from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 import Rating from '../components/Rating'
 import MemoryCard from '../components/MemoryCard'
@@ -10,9 +20,19 @@ export default function TripDetail() {
   const { id } = useParams()
   const { trips, memories, toggleFavourite } = useTravel()
   const [activeMemory, setActiveMemory] = useState(null)
+  const [activeTab, setActiveTab] = useState('memories') // 'memories' | 'gallery'
 
   const trip = trips.find((t) => t.id === id)
   const tripMemories = memories.filter((m) => m.tripId === id)
+
+  // Collect all photos across all memories of this journey
+  const allJourneyPhotos = tripMemories.flatMap((m) => {
+    const list = m.photos?.length > 0 ? m.photos : [m.photo]
+    return list.map((photoUrl) => ({
+      url: photoUrl,
+      memory: m,
+    }))
+  })
 
   if (!trip) {
     return (
@@ -68,9 +88,15 @@ export default function TripDetail() {
               {trip.startDate && (
                 <span className="flex items-center gap-1">
                   <Calendar size={14} />{' '}
-                  {new Date(trip.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                  {new Date(trip.startDate).toLocaleDateString(undefined, {
+                    month: 'short',
+                    year: 'numeric',
+                  })}
                 </span>
               )}
+              <span className="flex items-center gap-1 text-cream/90">
+                <Images size={14} /> {allJourneyPhotos.length} journey photos
+              </span>
             </div>
           </div>
 
@@ -92,7 +118,9 @@ export default function TripDetail() {
         {/* About this Trip */}
         {trip.description && (
           <div className="bg-paper border border-ink/10 rounded-3xl p-6 sm:p-8 shadow-sm">
-            <h2 className="font-display text-xl font-bold text-ink mb-2">About this Journey</h2>
+            <h2 className="font-display text-xl font-bold text-ink mb-2">
+              About this Journey
+            </h2>
             <p className="text-ink/75 text-base sm:text-lg leading-relaxed font-serif italic">
               "{trip.description}"
             </p>
@@ -105,52 +133,121 @@ export default function TripDetail() {
           </div>
         )}
 
-        {/* Memories from this trip */}
+        {/* View Switcher: Scrapbook vs Photo Gallery Album */}
         <div>
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-ink">Trip Memories</h2>
-              <p className="text-ink/50 text-sm mt-0.5">
-                {tripMemories.length} moment{tripMemories.length === 1 ? '' : 's'} recorded
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-ink/10">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('memories')}
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition ${
+                  activeTab === 'memories'
+                    ? 'bg-forest text-cream shadow-sm'
+                    : 'bg-paper border border-ink/15 text-ink/70 hover:bg-forest/5'
+                }`}
+              >
+                Scrapbook Cards ({tripMemories.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('gallery')}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition ${
+                  activeTab === 'gallery'
+                    ? 'bg-forest text-cream shadow-sm'
+                    : 'bg-paper border border-ink/15 text-ink/70 hover:bg-forest/5'
+                }`}
+              >
+                <Images size={14} />
+                <span>Journey Album ({allJourneyPhotos.length} Photos)</span>
+              </button>
             </div>
+
             <Link
               to="/add-memory"
-              className="inline-flex items-center gap-1.5 bg-clay text-cream px-4 py-2 rounded-full text-xs sm:text-sm font-semibold shadow-sm hover:brightness-110 active:scale-95 transition"
+              className="inline-flex items-center gap-1.5 bg-clay text-cream px-4 py-2 rounded-full text-xs sm:text-sm font-semibold shadow-sm hover:brightness-110 active:scale-95 transition self-start sm:self-auto"
             >
               <Plus size={15} strokeWidth={2.5} /> Add Memory to Trip
             </Link>
           </div>
 
-          {tripMemories.length ? (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
-              {tripMemories.map((m) => (
-                <MemoryCard
-                  key={m.id}
-                  memory={m}
-                  onSelect={(selected) => setActiveMemory(selected)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-paper border border-ink/10 rounded-3xl p-10 text-center">
-              <Compass className="mx-auto text-forest/40 mb-3" size={32} />
-              <h3 className="font-display text-lg font-semibold text-ink">No memories added yet</h3>
-              <p className="text-ink/50 text-xs sm:text-sm mt-1">
-                Capture the best moments, photos, and highlights from {trip.name}.
-              </p>
-              <Link
-                to="/add-memory"
-                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold bg-forest text-cream px-4 py-2 rounded-full hover:brightness-110"
-              >
-                <Plus size={14} /> Add First Memory
-              </Link>
-            </div>
+          {/* Tab 1: Scrapbook Cards */}
+          {activeTab === 'memories' && (
+            <>
+              {tripMemories.length ? (
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
+                  {tripMemories.map((m) => (
+                    <MemoryCard
+                      key={m.id}
+                      memory={m}
+                      onSelect={(selected) => setActiveMemory(selected)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-paper border border-ink/10 rounded-3xl p-10 text-center">
+                  <Compass className="mx-auto text-forest/40 mb-3" size={32} />
+                  <h3 className="font-display text-lg font-semibold text-ink">
+                    No memories added yet
+                  </h3>
+                  <p className="text-ink/50 text-xs sm:text-sm mt-1">
+                    Capture the best moments, photos, and highlights from {trip.name}.
+                  </p>
+                  <Link
+                    to="/add-memory"
+                    className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold bg-forest text-cream px-4 py-2 rounded-full hover:brightness-110"
+                  >
+                    <Plus size={14} /> Add First Memory
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Tab 2: Journey Photo Album Gallery */}
+          {activeTab === 'gallery' && (
+            <>
+              {allJourneyPhotos.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {allJourneyPhotos.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setActiveMemory(item.memory)}
+                      className="group relative aspect-square rounded-2xl overflow-hidden border border-ink/10 cursor-pointer shadow-sm hover:shadow-md transition"
+                    >
+                      <img
+                        src={item.url}
+                        alt={`Journey photo ${idx + 1}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                        <span className="text-cream text-xs font-semibold line-clamp-1">
+                          {item.memory.title}
+                        </span>
+                        <span className="text-cream/70 text-[10px]">
+                          {item.memory.location}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-paper border border-ink/10 rounded-3xl p-10 text-center">
+                  <Camera className="mx-auto text-forest/40 mb-3" size={32} />
+                  <h3 className="font-display text-lg font-semibold text-ink">
+                    No photos in this journey album yet
+                  </h3>
+                  <p className="text-ink/50 text-xs sm:text-sm mt-1">
+                    Log a memory to start filling your journey photo gallery.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Memory Detail Modal */}
+      {/* Memory Detail Modal with Full Carousel Slider */}
       <MemoryModal
         memory={activeMemory}
         onClose={() => setActiveMemory(null)}
@@ -158,4 +255,3 @@ export default function TripDetail() {
     </div>
   )
 }
-

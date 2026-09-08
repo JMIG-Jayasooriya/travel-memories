@@ -1,11 +1,15 @@
 import React from 'react'
-import { Heart, MapPin, Calendar } from 'lucide-react'
-import { moods } from '../data/mockData'
+import { Heart, MapPin, Calendar, Images } from 'lucide-react'
+import { moods, companionTypes } from '../data/mockData'
 import { useTravel } from '../context/TravelContext'
 
 export default function MemoryCard({ memory, onSelect, onRequireAuth }) {
   const { user, toggleFavourite } = useTravel()
   const moodEmoji = moods.find((m) => m.key === memory.mood)?.emoji
+  const companion = companionTypes.find((c) => c.key === memory.companionType)
+
+  const allPhotos = memory.photos?.length > 0 ? memory.photos : [memory.photo]
+  const coverPhoto = memory.photo || allPhotos[0]
 
   const handleFavouriteClick = (e) => {
     e.stopPropagation()
@@ -29,13 +33,22 @@ export default function MemoryCard({ memory, onSelect, onRequireAuth }) {
     >
       <div className="relative overflow-hidden aspect-[4/3] bg-ink/5">
         <img
-          src={memory.photo}
+          src={coverPhoto}
           alt={memory.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
+        {/* Multi-Photo Album Badge */}
+        {allPhotos.length > 1 && (
+          <span className="absolute top-3 left-3 bg-ink/75 hover:bg-ink text-cream text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur shadow-sm transition">
+            <Images size={11} />
+            <span>{allPhotos.length} photos</span>
+          </span>
+        )}
+
+        {/* Favourite Button */}
         <button
           type="button"
           onClick={handleFavouriteClick}
@@ -48,11 +61,18 @@ export default function MemoryCard({ memory, onSelect, onRequireAuth }) {
           />
         </button>
 
-        {memory.mood && (
-          <span className="absolute bottom-3 left-3 bg-paper/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-medium text-ink shadow-sm">
-            {moodEmoji} {memory.mood}
-          </span>
-        )}
+        <div className="absolute bottom-3 left-3 flex flex-wrap items-center gap-1.5 pointer-events-none">
+          {memory.mood && (
+            <span className="bg-paper/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-medium text-ink shadow-sm">
+              {moodEmoji} {memory.mood}
+            </span>
+          )}
+          {memory.companionType && (
+            <span className="bg-ink/80 text-cream backdrop-blur px-2.5 py-1 rounded-full text-[11px] font-medium shadow-sm flex items-center gap-1">
+              {companion?.emoji || '✨'} {memory.companionType}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="p-4 sm:p-5">
@@ -80,4 +100,3 @@ export default function MemoryCard({ memory, onSelect, onRequireAuth }) {
     </div>
   )
 }
-

@@ -37,36 +37,66 @@ export const initialTrips = [
   },
 ]
 
+export const companionTypes = [
+  { key: 'Solo', label: 'Solo', emoji: '🧍' },
+  { key: 'Friends', label: 'Friends', emoji: '👥' },
+  { key: 'Family', label: 'Family', emoji: '👨‍👩‍👧' },
+  { key: 'Official', label: 'Official', emoji: '💼' },
+  { key: 'Other', label: 'Other', emoji: '✨' },
+]
+
 export const initialMemories = [
   {
     id: 'm1', tripId: 't1', title: 'Sunset at Ella Rock',
     photo: 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=900&q=80',
+    photos: [
+      'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=900&q=80',
+      'https://images.unsplash.com/photo-1586183189334-25997a53f818?w=900&q=80',
+      'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=900&q=80',
+    ],
     caption: 'One of the most beautiful sunsets I have ever seen.',
-    location: 'Ella', date: '2026-03-16', mood: 'Adventurous', rating: 5, favourite: true,
+    location: 'Ella', date: '2026-03-16', mood: 'Adventurous', companionType: 'Friends', rating: 5, favourite: true,
   },
   {
     id: 'm2', tripId: 't1', title: 'Nine Arch Bridge, morning fog',
     photo: 'https://images.unsplash.com/photo-1596395463642-9d8f6c1ff611?w=900&q=80',
+    photos: [
+      'https://images.unsplash.com/photo-1596395463642-9d8f6c1ff611?w=900&q=80',
+      'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=900&q=80',
+    ],
     caption: 'Waited forty minutes for a train that took ten seconds to cross.',
-    location: 'Ella', date: '2026-03-17', mood: 'Peaceful', rating: 5, favourite: false,
+    location: 'Ella', date: '2026-03-17', mood: 'Peaceful', companionType: 'Solo', rating: 5, favourite: false,
   },
   {
     id: 'm3', tripId: 't2', title: 'Rampart walk',
     photo: 'https://images.unsplash.com/photo-1590059390047-f5f1f8b1c1c9?w=900&q=80',
+    photos: [
+      'https://images.unsplash.com/photo-1590059390047-f5f1f8b1c1c9?w=900&q=80',
+      'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=900&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&q=80',
+    ],
     caption: 'Lighthouse glowing gold, everyone slowed their pace without noticing.',
-    location: 'Galle', date: '2026-08-03', mood: 'Relaxing', rating: 4, favourite: true,
+    location: 'Galle', date: '2026-08-03', mood: 'Relaxing', companionType: 'Family', rating: 4, favourite: true,
   },
   {
     id: 'm4', tripId: 't3', title: 'Tea pickers at first light',
     photo: 'https://images.unsplash.com/photo-1571167530149-c72f2c8c1c1b?w=900&q=80',
+    photos: [
+      'https://images.unsplash.com/photo-1571167530149-c72f2c8c1c1b?w=900&q=80',
+      'https://images.unsplash.com/photo-1563299796-17596ed6b017?w=900&q=80',
+    ],
     caption: 'The whole valley smelled like green tea and woodsmoke.',
-    location: 'Nuwara Eliya', date: '2026-06-11', mood: 'Peaceful', rating: 5, favourite: false,
+    location: 'Nuwara Eliya', date: '2026-06-11', mood: 'Peaceful', companionType: 'Solo', rating: 5, favourite: false,
   },
   {
     id: 'm5', tripId: 't4', title: 'Whale watching at dawn',
     photo: 'https://images.unsplash.com/photo-1568430462989-44163eb1752f?w=900&q=80',
+    photos: [
+      'https://images.unsplash.com/photo-1568430462989-44163eb1752f?w=900&q=80',
+      'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=900&q=80',
+    ],
     caption: 'A blue whale surfaced twenty metres from the boat. Nobody spoke.',
-    location: 'Mirissa', date: '2025-12-21', mood: 'Exciting', rating: 5, favourite: true,
+    location: 'Mirissa', date: '2025-12-21', mood: 'Exciting', companionType: 'Official', rating: 5, favourite: true,
   },
 ]
 
