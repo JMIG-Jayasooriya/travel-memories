@@ -277,6 +277,30 @@ export function TravelProvider({ children }) {
     setUser(null)
   }
 
+  // Update user profile (e.g. avatar, name, bio)
+  const updateUser = (updates) => {
+    setUser((prev) => {
+      if (!prev) return null
+      const updated = { ...prev, ...updates }
+      try {
+        if (localStorage.getItem(USER_STORAGE_KEY)) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated))
+        } else {
+          sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated))
+        }
+        const registered = getStoredRegisteredUsers()
+        const index = registered.findIndex((u) => u.id === updated.id || u.email === updated.email)
+        if (index !== -1) {
+          registered[index] = { ...registered[index], ...updates }
+          saveStoredRegisteredUsers(registered)
+        }
+      } catch (e) {
+        console.error('Failed to sync updated user', e)
+      }
+      return updated
+    })
+  }
+
   const addTrip = (trip) => {
     const withId = { ...trip, id: nextId('t'), favourite: !!trip.favourite, rating: 0 }
     setTrips((prev) => [withId, ...prev])
@@ -342,7 +366,7 @@ export function TravelProvider({ children }) {
   }, [memories])
 
   const value = {
-    user, setUser,
+    user, setUser, updateUser,
     authLoading,
     login, register, logout,
     isAuthenticated: !!user,

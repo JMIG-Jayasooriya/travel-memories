@@ -105,55 +105,26 @@ export default function Home() {
 
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-6">
             {user ? (
-              <>
-                <Link
-                  to="/add-memory"
-                  className="inline-flex items-center gap-2 bg-clay text-cream px-6 py-3 rounded-full text-sm font-semibold shadow-stamp hover:brightness-110 active:scale-95 transition"
-                >
-                  <Plus size={17} strokeWidth={2.5} /> Log a Memory
-                </Link>
-                <Link
-                  to="/trips"
-                  className="inline-flex items-center gap-2 bg-cream/15 backdrop-blur-md border border-cream/30 text-cream px-5 py-3 rounded-full text-sm font-semibold hover:bg-cream/25 active:scale-95 transition"
-                >
-                  <Compass size={17} /> View Trips ({trips.length})
-                </Link>
-                <Link
-                  to="/places-visited"
-                  className="inline-flex items-center gap-2 bg-cream/15 backdrop-blur-md border border-cream/30 text-cream px-5 py-3 rounded-full text-sm font-semibold hover:bg-cream/25 active:scale-95 transition"
-                >
-                  <MapPin size={17} /> Places Visited ({stats.placesVisited})
-                </Link>
-              </>
+              <Link
+                to="/add-memory"
+                className="inline-flex items-center gap-2 bg-clay text-cream px-7 py-3.5 rounded-full text-sm font-semibold shadow-stamp hover:brightness-110 active:scale-95 transition"
+              >
+                <Plus size={17} strokeWidth={2.5} /> Log a Memory
+              </Link>
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleRequireAuth({
-                      title: 'Sign In to Log Memories',
-                      message: 'Create an account or sign in to start saving your own travel polaroids, milestones, and personal stories.',
-                      redirectPath: '/add-memory',
-                    })
-                  }
-                  className="inline-flex items-center gap-2 bg-clay text-cream px-6 py-3 rounded-full text-sm font-semibold shadow-stamp hover:brightness-110 active:scale-95 transition"
-                >
-                  <Plus size={17} strokeWidth={2.5} /> Log a Memory
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleRequireAuth({
-                      title: 'Sign In to View Trips',
-                      message: 'Sign in to explore trip itineraries, timeline expenses, and manage your travel journeys.',
-                      redirectPath: '/trips',
-                    })
-                  }
-                  className="inline-flex items-center gap-2 bg-cream/15 backdrop-blur-md border border-cream/30 text-cream px-6 py-3 rounded-full text-sm font-semibold hover:bg-cream/25 active:scale-95 transition"
-                >
-                  <Compass size={17} /> View Trips ({trips.length})
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() =>
+                  handleRequireAuth({
+                    title: 'Sign In to Log Memories',
+                    message: 'Create an account or sign in to start saving your own travel polaroids, milestones, and personal stories.',
+                    redirectPath: '/add-memory',
+                  })
+                }
+                className="inline-flex items-center gap-2 bg-clay text-cream px-7 py-3.5 rounded-full text-sm font-semibold shadow-stamp hover:brightness-110 active:scale-95 transition"
+              >
+                <Plus size={17} strokeWidth={2.5} /> Log a Memory
+              </button>
             )}
           </div>
         </div>

@@ -91,9 +91,26 @@ export default function Navbar() {
                 <Plus size={15} strokeWidth={2.5} /> Add Memory
               </button>
               <div className="flex items-center gap-2 pl-2 border-l border-ink/10">
-                <span className="text-xs font-semibold text-ink/80 max-w-[100px] truncate">
-                  {user.name || user.email.split('@')[0]}
-                </span>
+                <NavLink
+                  to="/profile"
+                  className="flex items-center gap-2 text-xs font-medium text-ink hover:text-forest bg-forest/5 hover:bg-forest/10 px-2.5 py-1 rounded-full transition"
+                  title="View Profile"
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-6 h-6 rounded-full object-cover border border-forest/20"
+                    />
+                  ) : (
+                    <span className="w-6 h-6 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
+                      {(user.name || user.email || 'U')[0].toUpperCase()}
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold text-ink/80 max-w-[100px] truncate">
+                    {user.name || user.email.split('@')[0]}
+                  </span>
+                </NavLink>
                 <button
                   onClick={handleLogout}
                   title="Log out"
@@ -164,12 +181,24 @@ export default function Navbar() {
                 <Plus size={16} strokeWidth={2.5} /> Add Memory
               </button>
               <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-ink">
-                  <span className="w-7 h-7 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
-                    {(user.name || user.email || 'U')[0].toUpperCase()}
-                  </span>
+                <NavLink
+                  to="/profile"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 text-sm font-medium text-ink"
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-7 h-7 rounded-full object-cover border border-forest/20"
+                    />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-forest text-cream text-xs font-semibold flex items-center justify-center">
+                      {(user.name || user.email || 'U')[0].toUpperCase()}
+                    </span>
+                  )}
                   <span className="truncate max-w-[150px]">{user.name || user.email}</span>
-                </div>
+                </NavLink>
                 <button
                   onClick={() => {
                     setOpen(false)
