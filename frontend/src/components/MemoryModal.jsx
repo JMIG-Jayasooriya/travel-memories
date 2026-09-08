@@ -3,12 +3,26 @@ import { X, MapPin, Calendar, Heart, Star } from 'lucide-react'
 import { moods } from '../data/mockData'
 import { useTravel } from '../context/TravelContext'
 
-export default function MemoryModal({ memory, onClose }) {
-  const { toggleFavourite } = useTravel()
+export default function MemoryModal({ memory, onClose, onRequireAuth }) {
+  const { user, toggleFavourite } = useTravel()
 
   if (!memory) return null
 
   const moodObj = moods.find((m) => m.key === memory.mood)
+
+  const handleFavouriteClick = () => {
+    if (!user) {
+      if (onRequireAuth) {
+        onRequireAuth({
+          title: 'Sign In to Favourite',
+          message: 'Sign in to your account to save this travel memory to your favourites collection.',
+          redirectPath: '/',
+        })
+      }
+      return
+    }
+    toggleFavourite('memory', memory.id)
+  }
 
   return (
     <div
@@ -38,7 +52,7 @@ export default function MemoryModal({ memory, onClose }) {
               className="w-full h-full object-cover"
             />
             <button
-              onClick={() => toggleFavourite('memory', memory.id)}
+              onClick={handleFavouriteClick}
               className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-cream/90 hover:bg-cream shadow-md flex items-center justify-center transition active:scale-95"
               aria-label="Toggle favourite"
             >

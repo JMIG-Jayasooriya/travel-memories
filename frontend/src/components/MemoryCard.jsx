@@ -3,9 +3,24 @@ import { Heart, MapPin, Calendar } from 'lucide-react'
 import { moods } from '../data/mockData'
 import { useTravel } from '../context/TravelContext'
 
-export default function MemoryCard({ memory, onSelect }) {
-  const { toggleFavourite } = useTravel()
+export default function MemoryCard({ memory, onSelect, onRequireAuth }) {
+  const { user, toggleFavourite } = useTravel()
   const moodEmoji = moods.find((m) => m.key === memory.mood)?.emoji
+
+  const handleFavouriteClick = (e) => {
+    e.stopPropagation()
+    if (!user) {
+      if (onRequireAuth) {
+        onRequireAuth({
+          title: 'Sign In to Favourite Moments',
+          message: 'Sign in to bookmark and save your favourite travel memories to your personal collection.',
+          redirectPath: '/',
+        })
+      }
+      return
+    }
+    toggleFavourite('memory', memory.id)
+  }
 
   return (
     <div
@@ -23,10 +38,7 @@ export default function MemoryCard({ memory, onSelect }) {
 
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            toggleFavourite('memory', memory.id)
-          }}
+          onClick={handleFavouriteClick}
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-cream/90 hover:bg-cream backdrop-blur flex items-center justify-center shadow-sm transition active:scale-90"
           aria-label="Toggle favourite"
         >
