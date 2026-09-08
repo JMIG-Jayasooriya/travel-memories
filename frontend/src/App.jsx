@@ -11,22 +11,22 @@ import CreateTrip from './pages/CreateTrip'
 import TripDetail from './pages/TripDetail'
 import AddMemory from './pages/AddMemory'
 import Profile from './pages/Profile'
+import PlacesVisited from './pages/PlacesVisited'
+import Memories from './pages/Memories'
+import Favourites from './pages/Favourites'
+import { useTravel } from './context/TravelContext'
 
 export default function App() {
+  const { user } = useTravel()
   return (
     <div className="min-h-screen flex flex-col bg-cream text-ink antialiased">
       <Navbar />
       <main className="flex-1">
         <Routes>
-          {/* Core Simple Routes - Protected Gate */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
-          />
+          {/* Public Home Landing Route */}
+          <Route path="/" element={<Home />} />
+          
+          {/* Core Feature Routes */}
           <Route
             path="/trips"
             element={
@@ -40,6 +40,30 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <TripDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/places-visited"
+            element={
+              <ProtectedRoute>
+                <PlacesVisited />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/memories"
+            element={
+              <ProtectedRoute>
+                <Memories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/favourites"
+            element={
+              <ProtectedRoute>
+                <Favourites />
               </ProtectedRoute>
             }
           />
@@ -72,19 +96,15 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Legacy route redirects to keep app simple and unified */}
-          <Route path="/memories" element={<Navigate to="/" replace />} />
-          <Route path="/stories" element={<Navigate to="/" replace />} />
-          <Route path="/stories/:id" element={<Navigate to="/" replace />} />
-          <Route path="/favourites" element={<Navigate to="/" replace />} />
-          <Route path="/journey" element={<Navigate to="/trips" replace />} />
+          {/* Legacy / Alias route redirects */}
+          <Route path="/journey" element={<Navigate to="/places-visited" replace />} />
           <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <Footer />
+      {user && <Footer />}
     </div>
   )
 }
