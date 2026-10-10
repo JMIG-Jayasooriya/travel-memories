@@ -6,7 +6,7 @@ import { travelTypes } from '../data/mockData'
 
 const sampleCovers = [
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80',
-  'https://images.unsplash.com/photo-1586183189334-25997a53f818?w=1200&q=80',
+  'https://images.unsplash.com/photo-1546708973-b339540b5162?w=1200&q=80',
   'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=1200&q=80',
   'https://images.unsplash.com/photo-1563299796-17596ed6b017?w=1200&q=80',
 ]
@@ -24,6 +24,10 @@ export default function CreateTrip() {
     description: '',
     type: travelTypes[0],
     favourite: false,
+    budget: 20000,
+    students: 4,
+    transitMode: '🚆 Scenic Train / CTB Bus',
+    studentPerk: '🎓 50% concessional rate with University ID',
   })
   const [errors, setErrors] = useState({})
 
@@ -48,6 +52,11 @@ export default function CreateTrip() {
     const trip = addTrip({
       ...form,
       cover: form.cover || sampleCovers[0],
+      budget: Number(form.budget) || 20000,
+      defaultStudents: Number(form.students) || 4,
+      studentBudgetPerPerson: Math.round((Number(form.budget) || 20000) / (Number(form.students) || 4)),
+      transitMode: form.transitMode,
+      studentPerk: form.studentPerk,
       lat: 6.9271,
       lng: 79.8612,
     })
@@ -189,6 +198,60 @@ export default function CreateTrip() {
               ))}
             </select>
           </Field>
+
+          {/* Undergrad Budget & Splitter */}
+          <div className="grid sm:grid-cols-2 gap-5 p-5 rounded-2xl bg-forest/5 border border-forest/15">
+            <Field label="Total Trip Budget (LKR)">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink/40">Rs.</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="500"
+                  value={form.budget}
+                  onChange={(e) => set('budget', Number(e.target.value))}
+                  placeholder="20000"
+                  className={`${inputCls} pl-10`}
+                />
+              </div>
+            </Field>
+
+            <Field label="Traveling Batchmates / Students">
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={form.students}
+                onChange={(e) => set('students', Math.max(1, Number(e.target.value)))}
+                className={inputCls}
+              />
+              <p className="text-[11px] text-forest font-semibold mt-1.5">
+                💡 Estimated cost: Rs. {Math.round((form.budget || 0) / (form.students || 1)).toLocaleString()} per student
+              </p>
+            </Field>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Field label="Commute & Rail Mode">
+              <input
+                type="text"
+                placeholder="e.g. 🚆 Scenic Train / CTB Bus"
+                value={form.transitMode}
+                onChange={(e) => set('transitMode', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+
+            <Field label="Student Perk / ID Hack">
+              <input
+                type="text"
+                placeholder="e.g. 🎓 50% discount with Uni ID"
+                value={form.studentPerk}
+                onChange={(e) => set('studentPerk', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+          </div>
 
           {/* Favourite checkbox */}
           <div className="pt-2">

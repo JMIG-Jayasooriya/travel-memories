@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTravel } from '../context/TravelContext'
 import TravelStats from '../components/TravelStats'
 import TripCard from '../components/TripCard'
 import MemoryCard from '../components/MemoryCard'
+import MemoryModal from '../components/MemoryModal'
 
 export default function Dashboard() {
   const { user, trips, memories, stats, expenses, travelPersonality } = useTravel()
+  const [activeMemory, setActiveMemory] = useState(null)
   const totalExpenses = Object.values(expenses).flat().reduce((s, e) => s + Number(e.amount), 0)
 
   return (
@@ -36,7 +38,13 @@ export default function Dashboard() {
               <Link to="/memories" className="text-sm text-forest hover:underline">View all</Link>
             </div>
             <div className="columns-1 sm:columns-2 gap-5">
-              {memories.slice(0, 4).map((m) => <MemoryCard key={m.id} memory={m} />)}
+              {memories.slice(0, 4).map((m) => (
+                <MemoryCard
+                  key={m.id}
+                  memory={m}
+                  onSelect={(sel) => setActiveMemory(sel)}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -62,6 +70,12 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Memory Detail Modal with Zoom */}
+      <MemoryModal
+        memory={activeMemory}
+        onClose={() => setActiveMemory(null)}
+      />
     </div>
   )
 }

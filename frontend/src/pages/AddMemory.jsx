@@ -25,7 +25,7 @@ const samplePhotos = [
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80',
   'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=900&q=80',
   'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=900&q=80',
-  'https://images.unsplash.com/photo-1586183189334-25997a53f818?w=900&q=80',
+  'https://images.unsplash.com/photo-1546708973-b339540b5162?w=900&q=80',
   'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=900&q=80',
 ]
 

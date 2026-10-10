@@ -3,12 +3,22 @@ import { Link } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 
+const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1546708973-b339540b5162?w=1200&q=80'
+
 export default function StoryCard({ story }) {
   const { toggleFavourite } = useTravel()
   return (
     <article className="grid md:grid-cols-5 gap-6 items-center border-b border-ink/10 pb-10">
       <Link to={`/stories/${story.id}`} className="md:col-span-2 block aspect-[4/3] rounded-2xl overflow-hidden">
-        <img src={story.cover} alt={story.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+        <img
+          src={story.cover || FALLBACK_PHOTO}
+          alt={story.title}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.src = FALLBACK_PHOTO
+          }}
+        />
       </Link>
       <div className="md:col-span-3">
         <p className="text-xs uppercase tracking-widest text-clay font-semibold">{story.location}</p>

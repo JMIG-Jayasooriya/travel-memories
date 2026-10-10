@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import {
-  initialTrips, initialMemories, initialStories, initialExpenses,
+  initialTrips, initialMemories, initialStories, initialExpenses, initialWishlistPlaces,
 } from '../data/mockData'
 import { authApi, getToken, setToken, clearToken } from '../api/auth'
 
@@ -46,6 +46,22 @@ export function TravelProvider({ children }) {
   const [memories, setMemories] = useState(initialMemories)
   const [stories, setStories] = useState(initialStories)
   const [expenses, setExpenses] = useState(initialExpenses)
+  const [wishlistPlaces, setWishlistPlaces] = useState(() => {
+    try {
+      const saved = localStorage.getItem('travel_wishlist_places')
+      return saved ? JSON.parse(saved) : initialWishlistPlaces
+    } catch {
+      return initialWishlistPlaces
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('travel_wishlist_places', JSON.stringify(wishlistPlaces))
+    } catch (e) {
+      console.error('Failed to save wishlist places', e)
+    }
+  }, [wishlistPlaces])
 
   // Verify and hydrate session on initial load
   useEffect(() => {
@@ -333,6 +349,46 @@ export function TravelProvider({ children }) {
     )))
   }
 
+  const addWishlistPlace = (place) => {
+    const withId = {
+      ...place,
+      id: nextId('w'),
+      estimatedBudget: Number(place.estimatedBudget) || 15000,
+      defaultStudents: Number(place.defaultStudents) || 4,
+      studentBudgetPerPerson: Math.round((Number(place.estimatedBudget) || 15000) / (Number(place.defaultStudents) || 4)),
+      studentTips: place.studentTips || ['Pack light and carry student ID for discounts!'],
+      studentPerk: place.studentPerk || '🎓 Student discounts available at local attractions',
+      transitMode: place.transitMode || '🚆 Public Train / Express Bus',
+    }
+    setWishlistPlaces((prev) => [withId, ...prev])
+    return withId
+  }
+
+  const convertWishlistToTrip = (wishlistId) => {
+    const item = wishlistPlaces.find((w) => w.id === wishlistId)
+    if (!item) return null
+    const newTrip = addTrip({
+      name: item.name,
+      destination: item.destination,
+      cover: item.cover,
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+      description: item.description,
+      type: item.type || 'Batch Trip',
+      budget: item.estimatedBudget || 18000,
+      lat: item.lat || 6.9271,
+      lng: item.lng || 79.8612,
+      defaultStudents: item.defaultStudents || 4,
+      studentBudgetPerPerson: item.studentBudgetPerPerson || 4500,
+      transitMode: item.transitMode,
+      studentPerk: item.studentPerk,
+      studentTips: item.studentTips,
+      studentCategory: item.type || 'Batch Trip',
+    })
+    setWishlistPlaces((prev) => prev.filter((w) => w.id !== wishlistId))
+    return newTrip
+  }
+
   const stats = useMemo(() => {
     const placesVisited = new Set(trips.map((t) => t.destination.split(',')[0].trim())).size
     const totalPhotos = memories.length
@@ -374,6 +430,7 @@ export function TravelProvider({ children }) {
     memories, addMemory,
     stories, addStory,
     expenses, addExpense,
+    wishlistPlaces, addWishlistPlace, convertWishlistToTrip, setWishlistPlaces,
     toggleFavourite,
     stats, travelPersonality,
   }

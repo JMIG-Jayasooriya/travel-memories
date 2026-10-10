@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Search, MapPin, Heart, Sparkles, SlidersHorizontal, Compass, RefreshCw, Lock, ArrowRight } from 'lucide-react'
+import { Plus, Search, MapPin, Heart, Sparkles, SlidersHorizontal, Compass, RefreshCw, Lock, ArrowRight, Images } from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 import TravelStats from '../components/TravelStats'
 import MemoryCard from '../components/MemoryCard'
@@ -17,6 +17,7 @@ export default function Home() {
   const [selectedTrip, setSelectedTrip] = useState('All')
   const [onlyFavourites, setOnlyFavourites] = useState(false)
   const [activeMemory, setActiveMemory] = useState(null)
+  const [viewMode, setViewMode] = useState('cards') // 'cards' | 'gallery'
 
   const [authModalConfig, setAuthModalConfig] = useState({
     isOpen: false,
@@ -50,6 +51,18 @@ export default function Home() {
       return matchSearch && matchMood && matchTrip && matchFav
     })
   }, [memories, searchQuery, selectedMood, selectedTrip, onlyFavourites])
+
+  // Collect all individual photos from all filtered memories
+  const allMemoriesPhotos = useMemo(() => {
+    return filteredMemories.flatMap((m) => {
+      const list = m.photos && m.photos.length > 0 ? m.photos : [m.photo].filter(Boolean)
+      return list.map((photoUrl, idx) => ({
+        url: photoUrl,
+        memory: m,
+        photoIndex: idx,
+      }))
+    })
+  }, [filteredMemories])
 
   const hasActiveFilters = searchQuery !== '' || selectedMood !== 'All' || selectedTrip !== 'All' || onlyFavourites
 
@@ -144,9 +157,36 @@ export default function Home() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-ink/10">
               <div>
                 <h2 className="font-display text-3xl font-bold text-ink">Travel Journal</h2>
-                <p className="text-ink/60 text-sm mt-1">
-                  Showing {filteredMemories.length} of {memories.length} memories
-                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  <p className="text-ink/60 text-xs sm:text-sm">
+                    {filteredMemories.length} memories · {allMemoriesPhotos.length} total photos
+                  </p>
+                  <div className="flex items-center gap-1.5 bg-ink/5 p-1 rounded-full">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('cards')}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition ${
+                        viewMode === 'cards'
+                          ? 'bg-paper text-forest shadow-sm'
+                          : 'text-ink/60 hover:text-ink'
+                      }`}
+                    >
+                      Cards View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('gallery')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition ${
+                        viewMode === 'gallery'
+                          ? 'bg-paper text-forest shadow-sm'
+                          : 'text-ink/60 hover:text-ink'
+                      }`}
+                    >
+                      <Images size={12} />
+                      <span>All Photos Wall ({allMemoriesPhotos.length})</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Search Box */}
@@ -229,18 +269,49 @@ export default function Home() {
               )}
             </div>
 
-            {/* Scrapbook Grid */}
+            {/* Memories Display: Cards vs Photo Wall */}
             {filteredMemories.length > 0 ? (
-              <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 mt-8">
-                {filteredMemories.map((m) => (
-                  <MemoryCard
-                    key={m.id}
-                    memory={m}
-                    onSelect={(selected) => setActiveMemory(selected)}
-                    onRequireAuth={handleRequireAuth}
-                  />
-                ))}
-              </div>
+              viewMode === 'cards' ? (
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 mt-8">
+                  {filteredMemories.map((m) => (
+                    <MemoryCard
+                      key={m.id}
+                      memory={m}
+                      onSelect={(selected) => setActiveMemory(selected)}
+                      onRequireAuth={handleRequireAuth}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-8">
+                  {allMemoriesPhotos.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setActiveMemory({ ...item.memory, initialIndex: item.photoIndex })}
+                      className="group relative aspect-square rounded-2xl overflow-hidden border border-ink/10 cursor-pointer shadow-sm hover:shadow-md transition bg-ink/5"
+                    >
+                      <img
+                        src={item.url}
+                        alt={`${item.memory.title} photo`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80'
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                        <span className="text-cream text-xs font-semibold line-clamp-1">
+                          {item.memory.title}
+                        </span>
+                        <span className="text-cream/70 text-[10px]">
+                          {item.memory.location} · Photo {item.photoIndex + 1}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
             ) : (
               <div className="bg-paper border border-ink/10 rounded-3xl p-12 text-center mt-8">
                 <div className="w-14 h-14 rounded-full bg-forest/10 text-forest flex items-center justify-center mx-auto mb-3">
@@ -270,15 +341,15 @@ export default function Home() {
               </div>
             )}
           </section>
-
-          {/* Memory Detail Modal */}
-          <MemoryModal
-            memory={activeMemory}
-            onClose={() => setActiveMemory(null)}
-            onRequireAuth={handleRequireAuth}
-          />
         </>
       )}
+
+      {/* Memory Detail Modal */}
+      <MemoryModal
+        memory={activeMemory}
+        onClose={() => setActiveMemory(null)}
+        onRequireAuth={handleRequireAuth}
+      />
 
       {/* Auth Prompt Modal for Protected Actions */}
       <AuthPromptModal
