@@ -10,11 +10,18 @@ import {
   Tag,
   Images,
   Camera,
+  Wallet,
+  Users,
+  Train,
+  GraduationCap,
+  ZoomIn,
 } from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 import Rating from '../components/Rating'
 import MemoryCard from '../components/MemoryCard'
 import MemoryModal from '../components/MemoryModal'
+
+const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1546708973-b339540b5162?w=1200&q=80'
 
 export default function TripDetail() {
   const { id } = useParams()
@@ -56,9 +63,13 @@ export default function TripDetail() {
       {/* Trip Cover Banner */}
       <div className="relative h-[48vh] min-h-[340px] max-h-[500px]">
         <img
-          src={trip.cover}
+          src={trip.cover || FALLBACK_PHOTO}
           alt={trip.name}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.src = FALLBACK_PHOTO
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/40 to-transparent" />
 
@@ -128,6 +139,53 @@ export default function TripDetail() {
               <div className="mt-4 pt-4 border-t border-ink/5 flex items-center gap-2">
                 <span className="text-xs text-ink/50 font-medium">Trip Rating:</span>
                 <Rating value={trip.rating} size={18} />
+              </div>
+            )}
+
+            {/* Undergraduate Student Details Banner */}
+            {(trip.transitMode || trip.studentPerk || trip.budget) && (
+              <div className="mt-6 pt-5 border-t border-ink/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {trip.budget && (
+                  <div className="bg-forest/5 border border-forest/15 rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-forest/10 text-forest flex items-center justify-center shrink-0">
+                      <Wallet size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-ink/50 font-semibold uppercase tracking-wider block">Student Split</span>
+                      <span className="text-xs sm:text-sm font-bold text-forest">
+                        Rs. {(trip.studentBudgetPerPerson || Math.round(trip.budget / 4)).toLocaleString()} / student
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {trip.transitMode && (
+                  <div className="bg-blue-50/50 border border-blue-200/50 rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                      <Train size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-ink/50 font-semibold uppercase tracking-wider block">Transit</span>
+                      <span className="text-xs sm:text-sm font-bold text-ink/80 truncate block">
+                        {trip.transitMode}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {trip.studentPerk && (
+                  <div className="bg-amber-50/50 border border-amber-200/50 rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                      <GraduationCap size={18} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-ink/50 font-semibold uppercase tracking-wider block">Student Perk</span>
+                      <span className="text-xs sm:text-sm font-bold text-ink/80 truncate block">
+                        {trip.studentPerk}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -211,21 +269,26 @@ export default function TripDetail() {
                   {allJourneyPhotos.map((item, idx) => (
                     <div
                       key={idx}
-                      onClick={() => setActiveMemory(item.memory)}
+                      onClick={() => setActiveMemory({ ...item.memory, initialIndex: item.photoIndex })}
                       className="group relative aspect-square rounded-2xl overflow-hidden border border-ink/10 cursor-pointer shadow-sm hover:shadow-md transition"
+                      title="Click to zoom photo full screen"
                     >
                       <img
                         src={item.url}
                         alt={`Journey photo ${idx + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = FALLBACK_PHOTO
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                        <span className="text-cream text-xs font-semibold line-clamp-1">
-                          {item.memory.title}
+                        <span className="text-cream text-xs font-semibold line-clamp-1 flex items-center gap-1">
+                          <ZoomIn size={12} className="shrink-0" /> {item.memory.title}
                         </span>
                         <span className="text-cream/70 text-[10px]">
-                          {item.memory.location}
+                          {item.memory.location} · Photo {item.photoIndex + 1}
                         </span>
                       </div>
                     </div>

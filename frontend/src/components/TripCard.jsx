@@ -4,6 +4,8 @@ import { Heart, Camera, MapPin } from 'lucide-react'
 import Rating from './Rating'
 import { useTravel } from '../context/TravelContext'
 
+const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1546708973-b339540b5162?w=1200&q=80'
+
 export default function TripCard({ trip, memoryCount = 0 }) {
   const { toggleFavourite } = useTravel()
   const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -12,9 +14,13 @@ export default function TripCard({ trip, memoryCount = 0 }) {
     <div className="group bg-paper rounded-3xl overflow-hidden border border-ink/10 shadow-stamp hover:-translate-y-1 transition-transform duration-300">
       <Link to={`/trips/${trip.id}`} className="block relative aspect-[4/3] overflow-hidden">
         <img
-          src={trip.cover}
+          src={trip.cover || FALLBACK_PHOTO}
           alt={trip.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.src = FALLBACK_PHOTO
+          }}
         />
         <span className="absolute top-3 left-3 bg-cream/90 text-forest text-xs font-semibold px-2.5 py-1 rounded-full">
           {trip.type}

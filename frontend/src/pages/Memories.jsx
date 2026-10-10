@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Heart, Sparkles, RefreshCw, Camera } from 'lucide-react'
+import { Plus, Search, Heart, Sparkles, RefreshCw, Camera, Images } from 'lucide-react'
 import { useTravel } from '../context/TravelContext'
 import MemoryCard from '../components/MemoryCard'
 import MemoryModal from '../components/MemoryModal'
@@ -13,6 +13,7 @@ export default function Memories() {
   const [moodFilter, setMoodFilter] = useState('All')
   const [favOnly, setFavOnly] = useState(false)
   const [activeMemory, setActiveMemory] = useState(null)
+  const [viewMode, setViewMode] = useState('cards') // 'cards' | 'gallery'
 
   const filtered = useMemo(() => {
     return memories.filter((m) => {
@@ -30,6 +31,17 @@ export default function Memories() {
       return matchSearch && matchCompanion && matchMood && matchFav
     })
   }, [memories, searchQuery, companionFilter, moodFilter, favOnly])
+
+  const allMemoriesPhotos = useMemo(() => {
+    return filtered.flatMap((m) => {
+      const list = m.photos && m.photos.length > 0 ? m.photos : [m.photo].filter(Boolean)
+      return list.map((photoUrl, idx) => ({
+        url: photoUrl,
+        memory: m,
+        photoIndex: idx,
+      }))
+    })
+  }, [filtered])
 
   const hasActiveFilters = searchQuery !== '' || companionFilter !== 'All' || moodFilter !== 'All' || favOnly
 
@@ -49,9 +61,36 @@ export default function Memories() {
             <Camera size={13} /> Photo Scrapbook
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-bold text-ink">Memories</h1>
-          <p className="text-ink/60 text-sm mt-1">
-            {memories.length} captured moments and unforgettable polaroids.
-          </p>
+          <div className="flex flex-wrap items-center gap-3 mt-1.5">
+            <p className="text-ink/60 text-xs sm:text-sm">
+              {memories.length} captured moments · {allMemoriesPhotos.length} total photos
+            </p>
+            <div className="flex items-center gap-1.5 bg-ink/5 p-1 rounded-full">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition ${
+                  viewMode === 'cards'
+                    ? 'bg-paper text-forest shadow-sm'
+                    : 'text-ink/60 hover:text-ink'
+                }`}
+              >
+                Cards View
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('gallery')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition ${
+                  viewMode === 'gallery'
+                    ? 'bg-paper text-forest shadow-sm'
+                    : 'text-ink/60 hover:text-ink'
+                }`}
+              >
+                <Images size={12} />
+                <span>All Photos Wall ({allMemoriesPhotos.length})</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <Link
@@ -82,11 +121,14 @@ export default function Memories() {
           onChange={(e) => setCompanionFilter(e.target.value)}
           className="text-xs font-semibold bg-paper border border-ink/15 rounded-full px-4 py-2 text-ink/80 focus:outline-none focus:ring-2 focus:ring-forest cursor-pointer"
         >
-          <option value="All">All Trip Types</option>
-          <option value="Solo">🧍 Solo</option>
+          <option value="All">All Companions & Groups</option>
+          <option value="Batchmates">🎓 Batchmates / Uni Friends</option>
+          <option value="Roommates">🏠 Hostel Roommates</option>
+          <option value="Club">🏕️ Uni Club / Society</option>
+          <option value="Solo">🎒 Solo Student Wanderer</option>
           <option value="Friends">👥 Friends</option>
           <option value="Family">👨‍👩‍👧 Family</option>
-          <option value="Official">💼 Official</option>
+          <option value="Official">💼 Study Tour / Internship</option>
           <option value="Other">✨ Other</option>
         </select>
       </div>
@@ -143,17 +185,48 @@ export default function Memories() {
         )}
       </div>
 
-      {/* Scrapbook Grid */}
+      {/* Scrapbook Grid vs Photo Wall */}
       {filtered.length > 0 ? (
-        <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 mt-8">
-          {filtered.map((m) => (
-            <MemoryCard
-              key={m.id}
-              memory={m}
-              onSelect={(selected) => setActiveMemory(selected)}
-            />
-          ))}
-        </div>
+        viewMode === 'cards' ? (
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 mt-8">
+            {filtered.map((m) => (
+              <MemoryCard
+                key={m.id}
+                memory={m}
+                onSelect={(selected) => setActiveMemory(selected)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-8">
+            {allMemoriesPhotos.map((item, idx) => (
+              <div
+                key={idx}
+                onClick={() => setActiveMemory({ ...item.memory, initialIndex: item.photoIndex })}
+                className="group relative aspect-square rounded-2xl overflow-hidden border border-ink/10 cursor-pointer shadow-sm hover:shadow-md transition bg-ink/5"
+              >
+                <img
+                  src={item.url}
+                  alt={`${item.memory.title} photo`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900&q=80'
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                  <span className="text-cream text-xs font-semibold line-clamp-1">
+                    {item.memory.title}
+                  </span>
+                  <span className="text-cream/70 text-[10px]">
+                    {item.memory.location} · Photo {item.photoIndex + 1}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
       ) : (
         <div className="bg-paper border border-ink/10 rounded-3xl p-12 text-center mt-8">
           <div className="w-14 h-14 rounded-full bg-forest/10 text-forest flex items-center justify-center mx-auto mb-3">
